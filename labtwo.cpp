@@ -13,31 +13,33 @@ void showHistogram(std::vector<cv::Mat>& hists);
 
 int main(int argc, char** argv)
 {
-    // Load the original image
+    // STEP 1 - Load the original image
 	cv::Mat originalImage = cv::imread("data/barbecue.png");
 	cv::imshow("Original Image", originalImage);
 	cv::waitKey();
 
 
-	// Calculate and show BGR histogram of the original image
+	// STEP 2 - Calculate and show BGR histogram of the original image
     std::vector<cv::Mat> originalImageHistogram(3);
     originalImageHistogram = calculateHistogram(originalImage);
     showHistogram(originalImageHistogram);
     cv::waitKey();
 
 
-    // Equalize the original image
+    // STEP 3 - Equalize the original image using cv::equalizeHist() function
     cv::Mat equalizedImage = equalizeHistogram(originalImage);
     cv::imshow("Equalized Image", equalizedImage);
     cv::waitKey();
 
-    // Calculate and show the BGR histogram of the equalized image
+
+    // STEP 4 - Calculate and show the BGR histogram of the equalized image
     std::vector<cv::Mat> equalizedImageHistogram(3);
     equalizedImageHistogram = calculateHistogram(equalizedImage);
     showHistogram(equalizedImageHistogram);
     cv::waitKey();
 
 
+    // STEP 5 - Luminance equalization
 
 
 	// wait for a key to be pressed and then close all
@@ -47,6 +49,12 @@ int main(int argc, char** argv)
 	return 0;
 }
 
+/**
+ * This function will calculate the histogram of a 3 channels (BGR) color image.
+ * Then it will return vector containing the B,G,R histograms.
+ * @param img
+ * @return bgr_histogram
+ */
 std::vector<cv::Mat> calculateHistogram(cv::Mat& img)
 {
     // Separating the image into 3 channels (B, G, and R)
@@ -81,6 +89,12 @@ std::vector<cv::Mat> calculateHistogram(cv::Mat& img)
     return bgr_histogram;
 }
 
+/**
+ * This function will equalize the BGR histograms of the input image using
+ * the cv::equalHist() function.
+ * @param img
+ * @return equalizedImage
+ */
 cv::Mat equalizeHistogram(cv::Mat& img)
 {
     // Separating the image into 3 channels (B, G, and R)
@@ -108,6 +122,10 @@ cv::Mat equalizeHistogram(cv::Mat& img)
     return equalizedImage;
 }
 
+/**
+ * This function will visualize the BGR histograms.
+ * @param hists
+ */
 void showHistogram(std::vector<cv::Mat>& hists)
 {
     // Min/Max computation
