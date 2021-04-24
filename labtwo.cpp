@@ -7,7 +7,8 @@
 
 
 std::vector<cv::Mat> calculateHistogram(cv::Mat& img);
-cv::Mat equalizeHistogram(cv::Mat& img);
+cv::Mat bgrEqualization(cv::Mat& img);
+cv::Mat luminanceEqualization(cv::Mat& img);
 void showHistogram(std::vector<cv::Mat>& hists);
 
 
@@ -27,8 +28,8 @@ int main(int argc, char** argv)
 
 
     // STEP 3 - Equalize the original image using cv::equalizeHist() function
-    cv::Mat equalizedImage = equalizeHistogram(originalImage);
-    cv::imshow("Equalized Image", equalizedImage);
+    cv::Mat equalizedImage = bgrEqualization(originalImage);
+    cv::imshow("BGR Equalized Image", equalizedImage);
     cv::waitKey();
 
 
@@ -39,7 +40,15 @@ int main(int argc, char** argv)
     cv::waitKey();
 
 
-    // STEP 5 - Luminance equalization
+    // STEP 5 - Equalize the original image using luminance equalization
+    cv::Mat luminanceEqualizedImage = luminanceEqualization(originalImage);
+    cv::imshow("Luminance Equalized Image", luminanceEqualizedImage);
+    cv::waitKey();
+
+    // Calculate and show histogram
+    std::vector<cv::Mat> luminanceEqualizedImageHistogram(3);
+    luminanceEqualizedImageHistogram = calculateHistogram(luminanceEqualizedImage);
+    showHistogram(luminanceEqualizedImageHistogram);
 
 
 	// wait for a key to be pressed and then close all
@@ -52,8 +61,6 @@ int main(int argc, char** argv)
 /**
  * This function will calculate the histogram of a 3 channels (BGR) color image.
  * Then it will return vector containing the B,G,R histograms.
- * @param img
- * @return bgr_histogram
  */
 std::vector<cv::Mat> calculateHistogram(cv::Mat& img)
 {
@@ -92,34 +99,51 @@ std::vector<cv::Mat> calculateHistogram(cv::Mat& img)
 /**
  * This function will equalize the BGR histograms of the input image using
  * the cv::equalHist() function.
- * @param img
- * @return equalizedImage
  */
-cv::Mat equalizeHistogram(cv::Mat& img)
+cv::Mat bgrEqualization(cv::Mat& img)
 {
     // Separating the image into 3 channels (B, G, and R)
     std::vector<cv::Mat> bgr_channels;
     cv::split(img, bgr_channels);
 
     // Applying histogram equalization to the image
-    cv::Mat b_equalized;
-    cv::Mat g_equalized;
-    cv::Mat r_equalized;
-    cv::equalizeHist(bgr_channels[0], b_equalized);
-    cv::equalizeHist(bgr_channels[1], g_equalized);
-    cv::equalizeHist(bgr_channels[2], r_equalized);
 
-    // Creating a 3 channels vector for the BGR equalized images
-    std::vector<cv::Mat> bgr_equalized(3);
-    bgr_equalized[0] = b_equalized;
-    bgr_equalized[1] = g_equalized;
-    bgr_equalized[2] = r_equalized;
+    cv::equalizeHist(bgr_channels[0], bgr_channels[0]);
+    cv::equalizeHist(bgr_channels[1], bgr_channels[1]);
+    cv::equalizeHist(bgr_channels[2], bgr_channels[2]);
 
     // Merging the BGR equalized images into a single image
     cv::Mat equalizedImage;
-    cv::merge(bgr_equalized, equalizedImage);
+    cv::merge(bgr_channels, equalizedImage);
 
     return equalizedImage;
+}
+
+/**
+ * This function will equalize the input image using the luminance equalization,
+ * where only L channel that is equalized.
+ */
+cv::Mat luminanceEqualization(cv::Mat& img)
+{
+    // Convert the input image from BGR color space to Lab color space
+    cv::Mat Lab_image;
+    cv::cvtColor(img, Lab_image, cv::COLOR_BGR2Lab);
+
+    // Separating the image into 3 channels (L, a, and b)
+    std::vector<cv::Mat> Lab_channels;
+    cv::split(Lab_image, Lab_channels);
+
+    // Applying histogram equalization to the Luminance channel
+    cv::equalizeHist(Lab_channels[0], Lab_channels[0]);
+
+    // Merging the BGR equalized images into a single image
+    cv::Mat luminanceEqualizedImage;
+    cv::merge(Lab_channels, luminanceEqualizedImage);
+
+    // Convert the image from Lab color space back to BGR color space
+    cv::cvtColor(luminanceEqualizedImage,luminanceEqualizedImage, cv::COLOR_Lab2BGR);
+
+    return luminanceEqualizedImage;
 }
 
 /**
