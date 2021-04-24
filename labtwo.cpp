@@ -18,6 +18,7 @@ int main(int argc, char** argv)
 	cv::imshow("Original Image", originalImage);
 	cv::waitKey();
 
+
 	// Calculate and show BGR histogram of the original image
     std::vector<cv::Mat> originalImageHistogram(3);
     originalImageHistogram = calculateHistogram(originalImage);
