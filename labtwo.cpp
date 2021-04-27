@@ -6,6 +6,15 @@
 #include <iostream>
 
 
+
+
+
+cv::Mat luminanceEqualizedImage;
+
+static void medianFilter( int, void* );
+static void gaussianFilter(int, void*);
+static void bilateralFilter(int, void*);
+
 std::vector<cv::Mat> calculateHistogram(cv::Mat& img);
 cv::Mat rgbEqualization(cv::Mat& img);
 cv::Mat luminanceEqualization(cv::Mat& img);
@@ -14,11 +23,11 @@ void showHistogram(std::vector<cv::Mat>& hists);
 
 int main(int argc, char** argv)
 {
+    /****************** PART 1 - HISTOGRAM EQUALIZATION ******************/
+
     // STEP 1 - Load the original image
     cv::Mat originalImage = cv::imread("data/barbecue.png");
     cv::imshow("Original Image", originalImage);
-    cv::waitKey();
-
 
     // STEP 2 - Calculate and show BGR histogram of the original image
     std::vector<cv::Mat> originalImageHistogram(3);
@@ -26,12 +35,9 @@ int main(int argc, char** argv)
     showHistogram(originalImageHistogram);
     cv::waitKey();
 
-
     // STEP 3 - Equalize the original image using cv::equalizeHist() function
     cv::Mat equalizedImage = rgbEqualization(originalImage);
     cv::imshow("RGB Equalized Image", equalizedImage);
-    cv::waitKey();
-
 
     // STEP 4 - Calculate and show the BGR histogram of the equalized image
     std::vector<cv::Mat> equalizedImageHistogram(3);
@@ -39,22 +45,106 @@ int main(int argc, char** argv)
     showHistogram(equalizedImageHistogram);
     cv::waitKey();
 
-
     // STEP 5 - Equalize the original image using luminance equalization
-    cv::Mat luminanceEqualizedImage = luminanceEqualization(originalImage);
+    luminanceEqualizedImage = luminanceEqualization(originalImage);
     cv::imshow("Luminance Equalized Image", luminanceEqualizedImage);
-    cv::waitKey();
 
     // Calculate and show histogram of the luminance equalized image
     std::vector<cv::Mat> luminanceEqualizedImageHistogram(3);
     luminanceEqualizedImageHistogram = calculateHistogram(luminanceEqualizedImage);
     showHistogram(luminanceEqualizedImageHistogram);
     cv::waitKey();
+    cv::destroyAllWindows();
 
+
+    /****************** PART 2 - IMAGE FILTERING ******************/
+    // Variable for the slider
+    int ksize_slider;
+    int sigmaX_slider;
+    int sigmaRange_slider;
+    int sigmaSpace_slider;
+
+    const int MAX_KSIZE_SLIDER = 31;
+    const int MAX_SIGMAX_SLIDER = 100;
+    const int MAX_SIGMARANGE_SLIDER = 3000;
+    const int MAX_SIGMASPACE_SLIDER = 500;
+
+    // STEP 1 - Median Filter
+    ksize_slider = 1;
+    cv::namedWindow("Median Filter", cv::WINDOW_AUTOSIZE);
+    cv::createTrackbar("ksize", "Median Filter", &ksize_slider, MAX_KSIZE_SLIDER, medianFilter);
+    // Show some image at the beginning
+    medianFilter(ksize_slider, 0);
+    cv::waitKey();
+
+    // STEP 2 - Gaussian Filter
+    ksize_slider = 1;
+    sigmaX_slider = 0;
+    cv::namedWindow("Gaussian Filter", cv::WINDOW_AUTOSIZE);
+    cv::createTrackbar("ksize", "Gaussian Filter", &ksize_slider, MAX_KSIZE_SLIDER, gaussianFilter);
+    cv::createTrackbar("sigmaX", "Gaussian Filter", &sigmaX_slider, MAX_SIGMAX_SLIDER, gaussianFilter);
+    // Show some image at the beginning
+    gaussianFilter(ksize_slider, 0);
+    cv::waitKey();
+
+    // STEP 3 - Bilateral Filter
+    sigmaRange_slider = 0;
+    sigmaSpace_slider = 0;
+    cv::namedWindow("Bilateral Filter", cv::WINDOW_AUTOSIZE);
+    cv::createTrackbar("sigma range", "Bilateral Filter", &sigmaRange_slider, MAX_SIGMARANGE_SLIDER, bilateralFilter);
+    cv::createTrackbar("sigma space", "Bilateral Filter", &sigmaSpace_slider, MAX_SIGMASPACE_SLIDER, bilateralFilter);
+    // Show some image at the beginning
+    bilateralFilter(1,0);
+    cv::waitKey();
 
     cv::destroyAllWindows();
 
 	return 0;
+}
+
+static void bilateralFilter(int, void*)
+{
+    cv::Mat filteredImage = luminanceEqualizedImage.clone();
+    double sigmaRange = (double) cv::getTrackbarPos("sigma range", "Bilateral Filter");
+    double sigmaSpace = (double) cv::getTrackbarPos("sigma space", "Bilateral Filter");
+    sigmaRange = sigmaRange / 10;
+
+
+    cv::bilateralFilter(luminanceEqualizedImage, filteredImage, 5, sigmaSpace, sigmaRange, cv::BORDER_DEFAULT);
+    cv::imshow("Bilateral Filter", filteredImage);
+}
+
+static void gaussianFilter(int, void*)
+{
+    cv::Mat filteredImage = luminanceEqualizedImage.clone();
+    int ksize = cv::getTrackbarPos("ksize", "Gaussian Filter");
+    double sigmaX = (double) cv::getTrackbarPos("sigmaX", "Gaussian Filter");
+    sigmaX = sigmaX / 10;
+
+    // ksize of gaussian filter must be odd and greater than or equal to zero
+    if (ksize >= 1) {
+        ksize = (ksize * 2) - 1;
+    }
+
+    // sigmaX must be greater or equal to zero
+    if (ksize > 0 && sigmaX >= 0)
+    {
+        cv::GaussianBlur(luminanceEqualizedImage, filteredImage, cv::Size(ksize, ksize), sigmaX, 0, 0);
+        cv::imshow("Gaussian Filter", filteredImage);
+    }
+
+}
+
+static void medianFilter(int, void*)
+{
+    cv::Mat filteredImage = luminanceEqualizedImage.clone();
+    int ksize = cv::getTrackbarPos("ksize", "Median Filter");
+    // ksize of median filter must be odd and greater than or equal to one
+    if ((ksize % 2) != 0 && ksize >= 1)
+    {
+        cv::medianBlur(luminanceEqualizedImage, filteredImage, ksize);
+        cv::imshow("Median Filter", filteredImage);
+    }
 }
 
 /**
