@@ -6,19 +6,18 @@
 #include <iostream>
 
 
-
-
-
 cv::Mat luminanceEqualizedImage;
 
-static void medianFilter( int, void* );
-static void gaussianFilter(int, void*);
-static void bilateralFilter(int, void*);
-
+// Function Header of PART-1
 std::vector<cv::Mat> calculateHistogram(cv::Mat& img);
 cv::Mat rgbEqualization(cv::Mat& img);
 cv::Mat luminanceEqualization(cv::Mat& img);
 void showHistogram(std::vector<cv::Mat>& hists);
+
+// Function Header of PART 2
+static void medianFilter( int, void* );
+static void gaussianFilter(int, void*);
+static void bilateralFilter(int, void*);
 
 
 int main(int argc, char** argv)
@@ -35,7 +34,7 @@ int main(int argc, char** argv)
     showHistogram(originalImageHistogram);
     cv::waitKey();
 
-    // STEP 3 - Equalize the original image using cv::equalizeHist() function
+    // STEP 3 - Equalize the original image using RGB Equalization
     cv::Mat equalizedImage = rgbEqualization(originalImage);
     cv::imshow("RGB Equalized Image", equalizedImage);
 
@@ -101,22 +100,34 @@ int main(int argc, char** argv)
 
 	return 0;
 }
-
+/**
+ * This function will perform a bilateral filter smoothing based on the values of sigma range
+ * and sigma space that is set on the trackbar
+ */
 static void bilateralFilter(int, void*)
 {
     cv::Mat filteredImage = luminanceEqualizedImage.clone();
+
     double sigmaRange = (double) cv::getTrackbarPos("sigma range", "Bilateral Filter");
     double sigmaSpace = (double) cv::getTrackbarPos("sigma space", "Bilateral Filter");
-    sigmaRange = sigmaRange / 10;
-
+    sigmaRange = sigmaRange / 1;
+    sigmaSpace = sigmaSpace / 1;
 
     cv::bilateralFilter(luminanceEqualizedImage, filteredImage, 5, sigmaSpace, sigmaRange, cv::BORDER_DEFAULT);
     cv::imshow("Bilateral Filter", filteredImage);
+
+    std::cout << "sigma range: " << sigmaRange;
+    std::cout << " sigma space: " << sigmaSpace << std::endl;
 }
 
+/**
+ * This function will perform a gaussian blur based on the value of the kernel size and sigmaX
+ * that is selected on the trackbar
+ */
 static void gaussianFilter(int, void*)
 {
     cv::Mat filteredImage = luminanceEqualizedImage.clone();
+
     int ksize = cv::getTrackbarPos("ksize", "Gaussian Filter");
     double sigmaX = (double) cv::getTrackbarPos("sigmaX", "Gaussian Filter");
     sigmaX = sigmaX / 10;
@@ -131,19 +142,28 @@ static void gaussianFilter(int, void*)
     {
         cv::GaussianBlur(luminanceEqualizedImage, filteredImage, cv::Size(ksize, ksize), sigmaX, 0, 0);
         cv::imshow("Gaussian Filter", filteredImage);
-    }
 
+        std::cout << "ksize: " << ksize;
+        std::cout << " sigmaX: " << sigmaX << std::endl;
+    }
 }
 
+/**
+ * This function will perform median blur based on the value of the kernel size that
+ * is selected on the trackbar.
+ */
 static void medianFilter(int, void*)
 {
     cv::Mat filteredImage = luminanceEqualizedImage.clone();
     int ksize = cv::getTrackbarPos("ksize", "Median Filter");
+    
     // ksize of median filter must be odd and greater than or equal to one
     if ((ksize % 2) != 0 && ksize >= 1)
     {
         cv::medianBlur(luminanceEqualizedImage, filteredImage, ksize);
         cv::imshow("Median Filter", filteredImage);
+
+        std::cout << "ksize: " << ksize << std::endl;
     }
 }
 
